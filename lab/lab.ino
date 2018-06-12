@@ -7,21 +7,6 @@ int tempPin = 1;
 int button1 = 5;
 int button2 = 6;
 int button_count = 0;
-bool flag = false;
-
-int digitForNum[10][8] = {//7세그먼트 표시할 배열
-  {1, 1, 1, 0, 1, 1, 1, 0}, //0
-  {0, 0, 1, 0, 1, 0, 0, 0}, //1
-  {1, 1, 0, 0, 1, 1, 0, 1}, //2
-  {0, 1, 1, 0, 1, 1, 0, 1}, //3
-  {0, 1, 1, 0, 0, 1, 1, 0}, //4
-  {1, 0, 1, 1, 0, 1, 1, 0}, //5
-  {1, 0, 1, 1, 1, 1, 1, 0}, //6
-  {1, 1, 1, 0, 0, 0, 0, 0}, //7
-  {1, 1, 1, 1, 1, 1, 1, 0}, //8
-  {1, 1, 1, 1, 0, 1, 1, 0}  //9
-};
-int  segmentLEDs[] = {7,8,9,10,11,12,13,14};
 
 void setup() {
   Serial.begin(9600);
@@ -33,10 +18,6 @@ void setup() {
   pinMode(button2,INPUT);
   attachPinInterrupt(button1,callback1,HIGH); 
   attachPinInterrupt(button2,callback2,HIGH); 
-  
-  for (int i = 0 ; i < 8; i++) {
-    pinMode(segmentLEDs[i], OUTPUT);
-  }
 }
 
 // 음표 길이들 : 4 = 4분(1/4) 음표, 8 = 8분(1/8) 음표, 
@@ -106,7 +87,6 @@ void ledOnOff(){
   digitalWrite(3,HIGH);
   delay(100);
   digitalWrite(3,LOW);
-  Serial.println("led on/off");
 }
 
 void temp(){
@@ -116,7 +96,7 @@ void temp(){
 }
 
 int callback1(uint32_t ulPin){
-  button_count=(button_count+1)%4;
+  button_count=(button_count+1)%3;
   Serial.print("click num:");
   Serial.println(button_count);
   switch(button_count){
@@ -124,16 +104,11 @@ int callback1(uint32_t ulPin){
          case 1: temp(); break;
          case 2: play_school_bell(); break;
          case 3: ledOnOff(); break;
-   }
-
-   for(int i=0;  i<8; i++){
-    digitalWrite(segmentLEDs[i], digitForNum[button_count][i]);
    }
 }
 
 int callback2(uint32_t ulPin){
-  if(button_count<=0) button_count=3;
-  else button_count-=1;
+  button_count=(button_count-1)%3;
   Serial.print("click num:");
   Serial.println(button_count);
   switch(button_count){
@@ -141,10 +116,6 @@ int callback2(uint32_t ulPin){
          case 1: temp(); break;
          case 2: play_school_bell(); break;
          case 3: ledOnOff(); break;
-   }
-
-   for(int i=0;  i<8; i++){
-    digitalWrite(segmentLEDs[i], digitForNum[button_count][i]);
    }
 }
 
@@ -158,8 +129,4 @@ void loop() {
          case 3: ledOnOff(); break;
    }
    button_count=input;
-
-   for(int i=0;  i<8; i++){
-    digitalWrite(segmentLEDs[i], digitForNum[button_count][i]);
-   }
 }
