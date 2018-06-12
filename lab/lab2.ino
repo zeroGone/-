@@ -7,7 +7,6 @@ int tempPin = 1;
 int button1 = 5;
 int button2 = 6;
 int button_count = 0;
-bool flag = false;
 
 int digitForNum[10][8] = {//7세그먼트 표시할 배열
   {1, 1, 1, 0, 1, 1, 1, 0}, //0
