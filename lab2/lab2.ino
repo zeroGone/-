@@ -3,11 +3,11 @@
 char *help[] = {"help","1","2","3"};
 char serial_data[10];
 int speakerPin = 2;
-int tempPin = 1;
+int DHpin = 1;
 int button1 = 5;
 int button2 = 6;
 int button_count = 0;
-
+byte dat[5];
 int digitForNum[10][8] = {//7세그먼트 표시할 배열
   {1, 1, 1, 0, 1, 1, 1, 0}, //0
   {0, 0, 1, 0, 1, 0, 0, 0}, //1
@@ -26,7 +26,7 @@ void setup() {
   Serial.begin(9600);
   pinMode(speakerPin, OUTPUT);
   pinMode(3, OUTPUT);
-  pinMode(tempPin, INPUT);
+  pinMode(DHpin, OUTPUT);
 
   pinMode(button1,INPUT);
   pinMode(button2,INPUT);
@@ -109,10 +109,54 @@ void ledOnOff(){
   Serial.println("led on/off");
 }
 
-void temp(){
-  int reading = analogRead(tempPin);
-  Serial.print((3.0*reading*100.0)/1024.0);
-  Serial.println("C");
+void DH(){
+ digitalWrite (DHpin, LOW); // bus down, send start signal 
+  delay (30); 
+  // delay greater than 18ms, so DHT11 start signal can be detected
+  digitalWrite (DHpin, HIGH); 
+  delayMicroseconds (40); // Wait for DHT11 response
+  pinMode (DHpin, INPUT); 
+  while (digitalRead (DHpin) == HIGH); 
+    delayMicroseconds (80); // DHT11 response, pulled the bus 80us 
+  if (digitalRead (DHpin) == LOW); 
+    delayMicroseconds (80); // DHT11 80us after the bus pulled to start sending data 
+  for (int i = 0; i < 4; i ++) {
+    dat[i] = read_data ();  
+  }
+// receive temperature and humidity data,
+//  the parity bit is not considered
+
+  pinMode (DHpin, OUTPUT); 
+  digitalWrite (DHpin, HIGH); // send data once after releasing 
+  //  the bus, wait for the host to open the next Start signal
+  Serial.print ("Current humdity ="); 
+  Serial.print (dat [0], DEC); // display the humidity-bit integer 
+  Serial.print ('.'); 
+  Serial.print (dat [1], DEC); // display the humidity decimal places 
+  Serial.println ('%');
+  Serial.print ("Current temperature ="); 
+  Serial.print (dat [2], DEC); // display the temperature of integer bits; 
+  Serial.print ('.'); 
+  Serial.print (dat [3], DEC); // display the temperature of decimal places; 
+  Serial.println ('C'); 
+  delay (700); 
+}
+
+byte read_data () { 
+  byte data; 
+  for (int i = 0; i < 8; i ++) { 
+    if (digitalRead (DHpin) == LOW) { 
+      while (digitalRead (DHpin) == LOW); // wait for 50us 
+       delayMicroseconds (30);  // determine the duration of the high 
+      // level to determine the data is '0 'or '1' 
+       if (digitalRead (DHpin) == HIGH) 
+          data |= (1 << (7-i)); // high front and low in the post 
+        while (digitalRead (DHpin) == HIGH); 
+         // data '1 ', wait for the next one receiver 
+     
+    }
+  }
+   return data; 
 }
 
 int callback1(uint32_t ulPin){
@@ -140,8 +184,8 @@ void segmentLED(){
 
 void state(){
   switch(button_count){
-         case 0: Serial.println("1. temp, 2. school bell, 3. led on/off(100ms)"); break;
-         case 1: temp(); break;
+         case 0: Serial.println("1. DH, 2. school bell, 3. led on/off(100ms)"); break;
+         case 1: DH(); break;
          case 2: play_school_bell(); break;
          case 3: ledOnOff(); break;
    }
@@ -151,5 +195,6 @@ void loop() {
   state();
   serial_input();
   long input = cmd_interpret(serial_data);
+  
    button_count=input;
 }
